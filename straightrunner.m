@@ -9,17 +9,18 @@ pefem = PEFEM;
 rho = 7800; A = 1; E = 280e9; v = 0.3;
 k = 1;
 curvedElement = PEFEMElement.createElement('SPRING',rho,A,k);
+curvedElement = curvedElement.setMyDofs([1 0 0 0 0 0]);
 ySpringElement = PEFEMElement.createElement('SPRING',rho,A,k);
 ySpringElement = ySpringElement.setMyDofs([0 1 0 0 0 0]); % Change to y!
-ySpringElement.stiffness = 10;
+%ySpringElement.stiffness = 10;
 
 % Create nodes 
-no = 4;
+no = 30;
 nodelist = PEFEMNode(no);
 X = linspace(0,1,no);
 for i = 1:length(X);
     node = PEFEMNode;
-    node.xy(X(i),0);
+    node.xy(X(i),0);%X(i));
 	nodelist(i) = node;
 end
 
@@ -32,18 +33,19 @@ eleList = [eleList1; eleList2];
 %[K2,M2] = PEFEM.asm_elements(eleList2);
 K = K1;% + K2;
 M = M1;% + M2;
-K = K(any(K,2),any(K,1))
+K = K(any(K,2),any(K,1));
 M = M(any(M,2),any(M,1));
 
 %return
-%M(1,1) = 2*M(1,1);
-%M(end,end) = 2*M(end,end);
+M(1,1) = 2*M(1,1);
+M(end,end) = 2*M(end,end);
 %K = K.*100000;
 
 
 
 K(1,1) = K(1,1).*10000; % CLAMP =)
-K(1,4) = 1;
+K(1,4) = 1; % DEP Kx Ky in first element
+K(4,1) = 1;
 K(2,2) = K(2,2).*10000; %CLAMP
 %K(10,10) = K(10,10).*10000;
 K(end,end) = K(end,end).*10000; % CLAMP =)
@@ -97,6 +99,7 @@ for plotMode = 1:length(lambda)
     hold on;
     %PEFEM.plotEigenMode(nodes,zeros(length(V(:,plotMode)),1),lambda(plotMode));
     PEFEM.plotEigenMode(nodes,V(:,plotMode),lambda(plotMode));
+    grid minor;
     lambda(plotMode)
     pause
 end

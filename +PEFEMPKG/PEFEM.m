@@ -233,6 +233,7 @@ classdef PEFEM
                 %j = j+1;
 
             end
+            plot(X,Y,'--ob','LineWidth',2);
             hold off
         end
     end
