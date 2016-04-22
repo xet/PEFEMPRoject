@@ -9,10 +9,12 @@ pefem = PEFEM;
 rho = 7800; A = 1; E = 280e9; v = 0.3;
 k = 1;
 curvedElement = PEFEMElement.createElement('SPRING',rho,A,k);
-
+ySpringElement = PEFEMElement.createElement('SPRING',rho,A,k);
+ySpringElement = ySpringElement.setMyDofs([0 1 0 0 0 0]); % Change to y!
+ySpringElement.stiffness = 10;
 
 % Create nodes 
-no = 3;
+no = 4;
 nodelist = PEFEMNode(no);
 X = linspace(0,1,no);
 for i = 1:length(X);
@@ -21,20 +23,32 @@ for i = 1:length(X);
 	nodelist(i) = node;
 end
 
-eleList = pefem.addElements(curvedElement, nodelist);
+eleList1 = pefem.addElements(curvedElement, nodelist);
+eleList2 = pefem.addElements(ySpringElement, nodelist);
+eleList = [eleList1; eleList2];
 
+[K1,M1, nodes] = PEFEM.asm_elements(eleList);
+%return
+%[K2,M2] = PEFEM.asm_elements(eleList2);
+K = K1;% + K2;
+M = M1;% + M2;
+K = K(any(K,2),any(K,1))
+M = M(any(M,2),any(M,1));
 
-[K,M] = PEFEM.asm_elements(eleList);
-
-M(1,1) = 2*M(1,1);
-M(end,end) = 2*M(end,end);
+%return
+%M(1,1) = 2*M(1,1);
+%M(end,end) = 2*M(end,end);
 %K = K.*100000;
 
 
 
 K(1,1) = K(1,1).*10000; % CLAMP =)
+K(1,4) = 1;
+K(2,2) = K(2,2).*10000; %CLAMP
 %K(10,10) = K(10,10).*10000;
 K(end,end) = K(end,end).*10000; % CLAMP =)
+K(end-1,end-1) = K(end-1,end-1).*10000; % CLAMP =)
+
 %K(end,:) = [];
 [V,lambda] = PEFEM.calcEigs(M,K); 
 %V = [zeros(1,length(lambda)); V];
@@ -53,46 +67,41 @@ K(end,end) = K(end,end).*10000; % CLAMP =)
 
 
 %V = zeros(
-plotMode = 2;
 %% PLOT MODE
+
+plotMode = 5;
 figure(2);
 %for plotMode = 1:length(lambda)
     
     clf;
     
-    PEFEM.plotEigenMode(eleList,V(:,plotMode),lambda(plotMode));
+    PEFEM.plotEigenMode(nodes,V(:,plotMode),lambda(plotMode));
     hold on;
-    PEFEM.plotEigenMode(eleList,-V(:,plotMode),lambda(plotMode));
+    PEFEM.plotEigenMode(nodes,-V(:,plotMode),lambda(plotMode));
     hold off;
     ax = axis;
+    clf
+    axis(ax);
     for t = linspace(0,4*pi,200)
         clf;
-        PEFEM.plotEigenMode(eleList,V(:,plotMode).*cos(t),lambda(plotMode));
+        PEFEM.plotEigenMode(nodes,V(:,plotMode).*cos(t),lambda(plotMode));
         axis(ax);
         drawnow;
     end
  %   pause
 %end
     return
-hold on;
-for ii = 1:length(lambda)
+%% Go through all
+for plotMode = 1:length(lambda)
     clf;
     hold on;
-    j = [1 2];
-    for i = 1:length(eleList)
-        ele = eleList{i};
-     %   display(['Element ' num2str(i) ' lenght: ' num2str(ele.L) ' Start: ' num2str(ele.nodes(1).x) ]);
-        
-        plot( [ele.nodes.x]', [ele.nodes.y]'+V(j,ii), '--*k', 'LineWidth',2);
-        
-        ele.plotElement;
-        j = j+1;
-        % break
-    end
-    lambda(ii)
+    %PEFEM.plotEigenMode(nodes,zeros(length(V(:,plotMode)),1),lambda(plotMode));
+    PEFEM.plotEigenMode(nodes,V(:,plotMode),lambda(plotMode));
+    lambda(plotMode)
     pause
 end
 
+return
 return
 figure(2);
 clf;

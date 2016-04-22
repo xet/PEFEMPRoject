@@ -89,9 +89,9 @@ classdef PEFEM
         end
     end
     methods (Static)
-        function [K,M] = asm_elements(elem_list)
+        function [K,M, nodes] = asm_elements(elem_list)
             % ASM_ELEMENTS ASSEMBLY ELEMENT FOR ELEM_LIST
-            no_elems = length(elem_list);
+            no_elems = length(elem_list)
             dof = elem_list{1}.dof;
             no_of_nodes = elem_list{1}.no_of_nodes;
             nodes = PEFEMPKG.PEFEMNode(2); % Just for allocating global node list
@@ -138,10 +138,15 @@ classdef PEFEM
                     end
 
                 end
+                % Allocate K, M
+              %  node_indexs
+               % kl = length(node_indexs);
+              %  K = zeros(kl*6,kl*6);
+              %  M = K;
        %         display(['Element ' num2str(ei) ' node_indexs: ' num2str(node_indexs') ]);
                 %     nodes = [nodes; node_list];
                 eledof = elem.dof; % DOF/node in this element
-                
+                ele_dofs = elem.dofs; % DOF's activated for each node in this element
                 [Ke, Me] = elem.getMatrices; % Get elements  matrices
                 % element_local_node = 1; NOT USED!!!
                 
@@ -152,15 +157,21 @@ classdef PEFEM
                 start = (node_indexs-1).*6 +1; % 6/dof at each node
                 intervals = [];
                 for si = start'
-                    stop = si+eledof-1;
-                    for ii = si:stop % This is for allocating K and M
+                    node_interval = si:(si+5);
+                   % node_interval = node_interval(ele_dofs); % Just use the correct dofs for this type of element
+              %      stop = si+eledof-1;
+                    for ii = node_interval % This is for allocating K and M
                         if (length(K) < ii )
                             K(ii,ii) = 0;
                             M(ii,ii) = 0;
                         end
                     end
-                    intervals = [intervals si:stop];
+                    node_interval = node_interval(ele_dofs); % Just use the correct dofs for this type of element
+
+                    % Add this node interval to intervals
+                    intervals = [intervals node_interval];
                 end
+                %intervals
                 % Assembly element matrix into global matrix
                 K(intervals,intervals) = K(intervals,intervals) + Ke;
                 M(intervals,intervals) = M(intervals,intervals) + Me;
@@ -177,8 +188,8 @@ classdef PEFEM
 %                 end
             end
             %      nodes
-          %  K = K(any(K,2),any(K,1)); % remove zero rows/columns
-         %   M = M(any(M,2),any(M,2));
+           % K = K(any(K,2),any(K,1)); % remove zero rows/columns
+           % M = M(any(M,2),any(M,2));
         end
         function [V,lambda] = calcEigs(M,K)
             % Calculates eigenvectors V and eigenfreq lambda (rad/s) from mass
@@ -188,18 +199,38 @@ classdef PEFEM
             [lambda, si] = sort(lambda);
             V = V(:,si);
         end
-        function plotEigenMode(eleList,V,lambda) 
+        function plotEigenMode(nodeList,V,lambda) 
+          %  V
             hold on;
-            j = [1 2];
-            for i = 1:length(eleList)
-                ele = eleList{i};
-                %dofs = ele.nodes.dofs;
-                
+            j = 1;
+            X = [];
+            Y = [];
+            for i = 1:length(nodeList)
+                ne = nodeList(i);
+                dofs = ne.dofs;
+                ij = 1;
+                displVector = zeros(12,1);
+                for n = dofs
+                    if n == 0
+                        ij = ij +1;
+                        continue
+                    end
+                    % Found a dof in the node, take the value from
+                %    display(['FOUND: ij: ' num2str(ij) ', j: ' num2str(j)]);
+                    displVector(ij) = V(j);
+                    ij = ij +1;
+                    j = j +1;
+                    
+                end
+                X = [X ne.x+displVector(1)];
+                Y = [Y ne.y+displVector(2)];
+               % plot( ne.x +displVector(1), ne.y + displVector(2), 'sb', 'LineWidth',2);
                 %plot( [ele.nodes.x]', [ele.nodes.y]'+V(j,ii), '--*k', 'LineWidth',2);
-                
-                ele.plotElementWithAddDispl(V(j));
+              %  displVector
+         %       ele.plotElementWithAddDispl(displVector);
                 % break
-                j = j+1;
+               % j = j + ij;
+                %j = j+1;
 
             end
             hold off

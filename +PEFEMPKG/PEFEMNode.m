@@ -12,7 +12,7 @@ classdef PEFEMNode < handle
         r = 0
         theta = 0
         elems
-        dofs = [0 0 0 0 0 0]% [x y z th fi gamma]
+        dofs = logical([0 0 0 0 0 0])% [x y z th fi gamma]
     end
     
     methods
@@ -36,6 +36,9 @@ classdef PEFEMNode < handle
             N.y = Y;
             [N.theta,N.r] = cart2pol(X,Y);
         end
+        function obj = setMyDofs(obj,dofs)
+            obj.dofs = logical(dofs);
+        end
         function obj = addElement(obj,elem)
             elements = {elements; elem}
         end
@@ -52,8 +55,8 @@ classdef PEFEMNode < handle
       %      if ( any(obj.dofs) && any( dofs - obj.dofs ) )
        %         error('Trying to use new dofs on node, however they are already specified to something else');
         %    end
-            newdofs = or(obj.dofs,dofs); % Just add the new dofs to the element
-            obj.dofs = newdofs;
+            newdofs = or(obj.dofs,logical(dofs)); % Just add the new dofs to the element
+            obj.setMyDofs(newdofs);
         end
         function vals = getDOFS(obj, dofs)
             %dofs = [0 0 0 0 0 0]% [x y z th fi gamma]

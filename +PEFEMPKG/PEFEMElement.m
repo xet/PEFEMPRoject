@@ -41,7 +41,9 @@ classdef PEFEMElement
                 obj = setfield(obj, fname, fval);
             end
         end
-        
+        function obj = setMyDofs(obj,dofs)
+            obj.dofs = logical(dofs);
+        end
         function obj = setNodes(obj,nodelist)
             obj.nodes = nodelist;
         end

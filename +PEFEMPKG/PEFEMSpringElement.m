@@ -22,12 +22,13 @@ classdef PEFEMSpringElement < PEFEMPKG.PEFEMElement
             else
                 obj.no_of_nodes = 2; % 2 nodes/elem
                 obj.dof = 1; % 3dof/node
-                obj.dofs = [1 0 0 0 0 0];
+                obj = obj.setMyDofs([1 0 0 0 0 0]);
                 obj.cord_type = 1; %Polar
                 obj.type = 'CURVED_BEAM';
                 obj.ele_color = 'b';
             end
         end
+
         function obj = setNodes(obj,nodelist)
             if (length(nodelist) ~= obj.no_of_nodes)
                 error(['Wrong length of node list (got ' num2str(length(nodelist)) ...
@@ -55,7 +56,7 @@ classdef PEFEMSpringElement < PEFEMPKG.PEFEMElement
             plot( [obj.nodes.x]', [obj.nodes.y]', ['-*' obj.ele_color], 'LineWidth', 2);
         end
         function plotElementWithAddDispl(obj,displVector) 
-            plot( [obj.nodes.x]', [obj.nodes.y]'+displVector, ['-o' obj.ele_color], 'LineWidth', 2);
+            plot( [obj.nodes.x]'+displVector([1 7]) , [obj.nodes.y]'+displVector([2 8]), ['-o' obj.ele_color], 'LineWidth', 2);
         end
     end
     methods (Static)
